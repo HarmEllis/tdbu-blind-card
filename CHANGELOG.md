@@ -27,3 +27,10 @@
   bar.
 - Added `collision` (`block` / `push` / `none`), replacing `prevent_overlap`.
 - Dragging still sends nothing; each handle commands its rail once on release.
+
+## 1.3.0
+
+- The built-in presets now depend on `layout`. The previous set was written for
+  `split`; under `between` two of the four asked the rails to cross, which the
+  collision clamp silently turned into a meaningless position.
+- `between` ships with Open / Privacy / Bottom gap / Band / Closed.

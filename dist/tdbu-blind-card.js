@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.2.0";
+const CARD_VERSION = "1.3.0";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -38,6 +38,11 @@ const TRANSLATIONS = {
     sub_all_closed: "all closed",
     sub_top: "top {v}%",
     sub_bottom: "bottom {v}%",
+    preset_gap_bottom: "Bottom gap",
+    preset_band: "Band",
+    sub_bottom_half: "bottom half",
+    sub_at_bottom: "{v}% at the bottom",
+    sub_band: "middle band",
     ed_name: "Name",
     ed_top_entity: "Top cover",
     ed_bottom_entity: "Bottom cover",
@@ -83,6 +88,11 @@ const TRANSLATIONS = {
     sub_all_closed: "alles dicht",
     sub_top: "boven {v}%",
     sub_bottom: "onder {v}%",
+    preset_gap_bottom: "Kier onder",
+    preset_band: "Midden",
+    sub_bottom_half: "onderste helft",
+    sub_at_bottom: "{v}% onderaan",
+    sub_band: "middenband",
     ed_name: "Naam",
     ed_top_entity: "Cover bovenkant",
     ed_bottom_entity: "Cover onderkant",
@@ -128,6 +138,11 @@ const TRANSLATIONS = {
     sub_all_closed: "ganz zu",
     sub_top: "oben {v}%",
     sub_bottom: "unten {v}%",
+    preset_gap_bottom: "Spalt unten",
+    preset_band: "Mitte",
+    sub_bottom_half: "untere H\u00e4lfte",
+    sub_at_bottom: "{v}% unten",
+    sub_band: "Mittelband",
     ed_name: "Name",
     ed_top_entity: "Cover oben",
     ed_bottom_entity: "Cover unten",
@@ -173,6 +188,11 @@ const TRANSLATIONS = {
     sub_all_closed: "tout fermé",
     sub_top: "haut {v}%",
     sub_bottom: "bas {v}%",
+    preset_gap_bottom: "Jour en bas",
+    preset_band: "Milieu",
+    sub_bottom_half: "moiti\u00e9 basse",
+    sub_at_bottom: "{v}% en bas",
+    sub_band: "bande centrale",
     ed_name: "Nom",
     ed_top_entity: "Volet haut",
     ed_bottom_entity: "Volet bas",
@@ -217,12 +237,25 @@ const translator = (lang) => (key, vars) => {
   return out;
 };
 
-const defaultPresets = (t) => [
-  { name: t("preset_open"), sub: t("sub_all_open"), top: 100, bottom: 100 },
-  { name: t("preset_daylight"), sub: t("sub_top", { v: 20 }), top: 80, bottom: 100 },
-  { name: t("preset_privacy"), sub: t("sub_bottom", { v: 60 }), top: 100, bottom: 40 },
-  { name: t("preset_closed"), sub: t("sub_all_closed"), top: 0, bottom: 0 },
-];
+// Positions are raw cover positions, so what a given number means on screen
+// depends on the layout — hence a separate set for each.
+const defaultPresets = (t, between) => (between
+  ? [
+      // Fabric spans between the rails: closed is top rail up, bottom rail down,
+      // and open parks both rails together at the head.
+      { name: t("preset_open"), sub: t("sub_all_open"), top: 0, bottom: 100 },
+      { name: t("preset_privacy"), sub: t("sub_bottom_half"), top: 50, bottom: 0 },
+      { name: t("preset_gap_bottom"), sub: t("sub_at_bottom", { v: 20 }), top: 0, bottom: 20 },
+      { name: t("preset_band"), sub: t("sub_band"), top: 50, bottom: 30 },
+      { name: t("preset_closed"), sub: t("sub_all_closed"), top: 0, bottom: 0 },
+    ]
+  : [
+      // Two independent shades, each closing in from its own edge.
+      { name: t("preset_open"), sub: t("sub_all_open"), top: 100, bottom: 100 },
+      { name: t("preset_daylight"), sub: t("sub_top", { v: 20 }), top: 80, bottom: 100 },
+      { name: t("preset_privacy"), sub: t("sub_bottom", { v: 60 }), top: 100, bottom: 40 },
+      { name: t("preset_closed"), sub: t("sub_all_closed"), top: 0, bottom: 0 },
+    ]);
 
 const STYLES = `
 :host { display: block; }
@@ -477,7 +510,9 @@ class TdbuBlindCard extends HTMLElement {
   /* ---------------- DOM ---------------- */
 
   _presets() {
-    return Array.isArray(this._config.presets) ? this._config.presets : defaultPresets(this._t);
+    return Array.isArray(this._config.presets)
+      ? this._config.presets
+      : defaultPresets(this._t, this._between());
   }
 
   _build() {

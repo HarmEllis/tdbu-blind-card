@@ -85,7 +85,7 @@ Everything else is optional.
 | `collision` | `block` \| `push` \| `none` | `block` | What happens when you drag a handle past the other one. `block` stops it against the other handle, `push` drags the other one along (and commands both rails on release), `none` lets them cross. Replaces `prevent_overlap`, which is still honoured when set to `false`. |
 | `buttons_target` | `both` \| `top` \| `bottom` | `both` | Which shade(s) the ▲ / ■ / ▼ buttons control. |
 | `scene` | `gradient` \| `none` \| image path | `gradient` | What is drawn behind the shades. Any `/local/...` image works. |
-| `presets` | list | Open / Daylight / Privacy / Closed | Quick actions, see below. |
+| `presets` | list | depends on `layout` | Quick actions, see [Presets](#presets). |
 | `favorite` | string \| number | second preset | Preset name (or index) applied by the ♥ button. |
 | `presets_label` | string | "Quick actions" | Heading above the quick actions. |
 | `top_label` / `bottom_label` | string | "Top" / "Bottom" | Override the slider labels. |
@@ -94,21 +94,50 @@ Everything else is optional.
 
 ### Presets
 
+A preset is a name with an optional `top` and `bottom` position. Tapping one
+takes exactly the same path as releasing a handle: one
+`cover.set_cover_position` per rail, plus a write to the position memory. Omit
+`top` or `bottom` and that rail is left alone. The ♥ button runs the preset named
+by `favorite`, or the second one in the list if you don't set it.
+
 ```yaml
 presets:
   - name: Open
     sub: all open
-    top: 100
+    top: 0           # positions are raw cover positions: 100 = open, 0 = closed
     bottom: 100
-  - name: Daylight
-    sub: top 20%
-    top: 80          # positions are raw cover positions: 100 = open, 0 = closed
-    bottom: 100
+  - name: Privacy
+    sub: bottom half
+    top: 50
+    bottom: 0
   - name: Movie
-    sub: bottom 80%
-    bottom: 20       # omit `top` to leave that shade untouched
-favorite: Daylight
+    sub: keep the top
+    bottom: 20       # omit `top` to leave that rail untouched
+favorite: Privacy
 ```
+
+Because a position number lands somewhere different in each layout, the built-in
+defaults differ too.
+
+**`layout: between`** — the fabric spans between the rails, so `top` is how far
+the top rail has come down and `bottom` is how far the bottom rail has come up:
+
+| Preset | `top` | `bottom` | Result |
+|---|---|---|---|
+| Open | 0 | 100 | both rails parked at the head, whole window clear |
+| Privacy | 50 | 0 | fabric over the bottom half |
+| Bottom gap | 0 | 20 | fabric over all but the lowest 20% |
+| Band | 50 | 30 | a band of fabric across the middle |
+| Closed | 0 | 0 | fabric over the whole window |
+
+**`layout: split`** — two independent shades, each closing in from its own edge:
+
+| Preset | `top` | `bottom` | Result |
+|---|---|---|---|
+| Open | 100 | 100 | both shades rolled away |
+| Daylight | 80 | 100 | top shade down 20% |
+| Privacy | 100 | 40 | bottom shade up 60% |
+| Closed | 0 | 0 | both shades fully drawn |
 
 ## Position memory
 
