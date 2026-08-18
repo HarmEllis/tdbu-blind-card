@@ -21,9 +21,8 @@ rail, a control row and configurable quick actions.
 │       ●══╪═══════════════════╡ │  ← bottom rail
 │    65%   │                   │ │  ← opening
 │  Bottom  └───────────────────┘ │
-│  [⚙] [▼] [■] [▲] [♥]           │
 │  Quick actions                 │
-│  [Open][Daylight][Privacy][Closed] │
+│  [Open][Top strip][Band][Privacy] │
 └────────────────────────────────┘
 ```
 
@@ -34,7 +33,8 @@ rail, a control row and configurable quick actions.
 - One bar with two handles, sitting exactly where the rails hang in the window,
   so you always drag in the direction the rail travels.
 - Handles cannot pass each other — or push each other along, your choice.
-- Open / stop / close for both shades, plus a favourite button.
+- Open / stop / close for both shades, beside the window when the card is
+  wide enough and underneath it when it is not.
 - Quick-action presets, fully configurable.
 - **Position memory** for integrations that never report a position (see below).
 - Visual editor; UI strings follow the Home Assistant user's language
@@ -86,7 +86,6 @@ Everything else is optional.
 | `buttons_target` | `both` \| `top` \| `bottom` | `both` | Which shade(s) the ▲ / ■ / ▼ buttons control. |
 | `scene` | `gradient` \| `none` \| image path | `gradient` | What is drawn behind the shades. Any `/local/...` image works. |
 | `presets` | list | depends on `layout` | Quick actions, see [Presets](#presets). |
-| `favorite` | string \| number | second preset | Preset name (or index) applied by the ♥ button. |
 | `presets_label` | string | "Quick actions" | Heading above the quick actions. |
 | `top_label` / `bottom_label` | string | "Top" / "Bottom" | Override the slider labels. |
 | `language` | string | HA user language | Force the card's language, e.g. `nl`. |
@@ -97,8 +96,7 @@ Everything else is optional.
 A preset is a name with an optional `top` and `bottom` position. Tapping one
 takes exactly the same path as releasing a handle: one
 `cover.set_cover_position` per rail, plus a write to the position memory. Omit
-`top` or `bottom` and that rail is left alone. The ♥ button runs the preset named
-by `favorite`, or the second one in the list if you don't set it.
+`top` or `bottom` and that rail is left alone.
 
 ```yaml
 presets:
@@ -113,7 +111,6 @@ presets:
   - name: Movie
     sub: keep the top
     bottom: 20       # omit `top` to leave that rail untouched
-favorite: Privacy
 ```
 
 Preset positions describe the blind the way the card draws it. On a card with

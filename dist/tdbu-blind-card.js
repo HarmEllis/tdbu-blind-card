@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.4.1";
+const CARD_VERSION = "1.5.0";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -23,11 +23,9 @@ const TRANSLATIONS = {
     moving: "moving…",
     unavailable: "unavailable",
     remembered: "Remembered position — this blind does not report its own position",
-    details: "Details",
     close: "Close",
     stop: "Stop",
     open: "Open",
-    favorite: "Favourite",
     entity_missing: "Configure both top_entity and bottom_entity",
     entity_not_found: "Entity not found",
     preset_open: "Open",
@@ -75,11 +73,9 @@ const TRANSLATIONS = {
     moving: "beweegt…",
     unavailable: "niet bereikbaar",
     remembered: "Onthouden stand — dit blind meldt zijn positie niet terug",
-    details: "Details",
     close: "Sluiten",
     stop: "Stop",
     open: "Openen",
-    favorite: "Favoriet",
     entity_missing: "Stel zowel top_entity als bottom_entity in",
     entity_not_found: "Entiteit niet gevonden",
     preset_open: "Open",
@@ -127,11 +123,9 @@ const TRANSLATIONS = {
     moving: "bewegt sich…",
     unavailable: "nicht erreichbar",
     remembered: "Gemerkte Position — dieses Rollo meldet seine Position nicht zurück",
-    details: "Details",
     close: "Schließen",
     stop: "Stopp",
     open: "Öffnen",
-    favorite: "Favorit",
     entity_missing: "Bitte top_entity und bottom_entity angeben",
     entity_not_found: "Entität nicht gefunden",
     preset_open: "Offen",
@@ -179,11 +173,9 @@ const TRANSLATIONS = {
     moving: "en mouvement…",
     unavailable: "indisponible",
     remembered: "Position mémorisée — ce store ne renvoie pas sa position",
-    details: "Détails",
     close: "Fermer",
     stop: "Arrêt",
     open: "Ouvrir",
-    favorite: "Favori",
     entity_missing: "Renseignez top_entity et bottom_entity",
     entity_not_found: "Entité introuvable",
     preset_open: "Ouvert",
@@ -361,15 +353,19 @@ ha-card.dark {
 }
 .window.smooth .shade { transition: height .35s ease, top .35s ease; }
 
-.btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.btns { display: flex; gap: 8px; }
+/* Beside the window: bottom-up order puts open at the top, close at the bottom. */
+.btns.side { flex-direction: column-reverse; justify-content: space-between; flex: 0 0 46px; width: 46px; }
+.btns.below { flex-direction: row; }
+.btns.below button { flex: 1 1 0; }
 .btns button {
   display: flex; align-items: center; justify-content: center;
-  height: 46px; border: none; border-radius: 12px; cursor: pointer;
+  height: 46px; flex: 0 0 46px; width: 46px; border: none; border-radius: 12px; cursor: pointer;
   background: var(--tdbu-chip); color: var(--tdbu-fg);
   --mdc-icon-size: 22px;
 }
+.btns.below button { width: auto; }
 .btns button:hover { background: var(--tdbu-chip-hover); }
-.btns button.accent { color: var(--tdbu-accent); }
 .btns button:active { transform: scale(.96); }
 
 .quick .quick-label { font-size: 12px; color: var(--tdbu-dim); margin-bottom: 6px; }
@@ -444,6 +440,7 @@ class TdbuBlindCard extends HTMLElement {
 
   _teardown() {
     this._built = false;
+    if (this._ro) { this._ro.disconnect(); this._ro = null; }
     this.shadowRoot.innerHTML = "";
   }
 
@@ -559,13 +556,11 @@ class TdbuBlindCard extends HTMLElement {
             <div class="shade top"></div>
             <div class="shade bottom"></div>
           </div>
-        </div>
-        <div class="btns">
-          <button data-act="info" title="${esc(t("details"))}"><ha-icon icon="mdi:tune-variant"></ha-icon></button>
-          <button data-act="close" title="${esc(t("close"))}"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-          <button data-act="stop" title="${esc(t("stop"))}"><ha-icon icon="mdi:stop"></ha-icon></button>
-          <button data-act="open" title="${esc(t("open"))}"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-          <button data-act="fav" class="accent" title="${esc(t("favorite"))}"><ha-icon icon="mdi:heart-outline"></ha-icon></button>
+          <div class="btns side">
+            <button data-act="close" title="${esc(t("close"))}"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button data-act="stop" title="${esc(t("stop"))}"><ha-icon icon="mdi:stop"></ha-icon></button>
+            <button data-act="open" title="${esc(t("open"))}"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+          </div>
         </div>
         ${presets.length ? `<div class="quick">
           <div class="quick-label">${esc(c.presets_label || t("quick_actions"))}</div>
@@ -578,6 +573,11 @@ class TdbuBlindCard extends HTMLElement {
     this.shadowRoot.append(style, card);
     this._card = card;
     this._el = {
+      wrap: card.querySelector(".wrap"),
+      stage: card.querySelector(".stage"),
+      rails: card.querySelector(".rails"),
+      btns: card.querySelector(".btns"),
+      quick: card.querySelector(".quick"),
       title: card.querySelector(".title"),
       sub: card.querySelector(".sub"),
       window: card.querySelector(".window"),
@@ -596,6 +596,12 @@ class TdbuBlindCard extends HTMLElement {
       el.addEventListener("click", () => this._moreInfo(el.dataset.part));
     });
     this._bindDual();
+
+    this._layoutButtons();
+    if (window.ResizeObserver) {
+      this._ro = new ResizeObserver(() => this._layoutButtons());
+      this._ro.observe(this._el.stage);
+    }
 
     if (c.scene && c.scene !== "gradient" && c.scene !== "none") {
       this._el.scene.style.backgroundImage = `url("${c.scene}")`;
@@ -683,6 +689,23 @@ class TdbuBlindCard extends HTMLElement {
     });
   }
 
+  /**
+   * The buttons sit beside the window when the card is wide enough for them,
+   * and drop to a row underneath it when it is not.
+   */
+  _layoutButtons() {
+    const el = this._el;
+    const avail = el.stage.clientWidth;
+    if (!avail) return;
+    const needed = el.rails.offsetWidth + el.window.offsetWidth + 46 + 20;
+    const side = needed + 4 <= avail;
+    if (side === (el.btns.parentElement === el.stage)) return;
+    el.btns.classList.toggle("side", side);
+    el.btns.classList.toggle("below", !side);
+    if (side) el.stage.appendChild(el.btns);
+    else el.wrap.insertBefore(el.btns, el.quick || null);
+  }
+
   _setSmooth(on) {
     this._dual.classList.toggle("smooth", on);
     this._el.window.classList.toggle("smooth", on);
@@ -738,15 +761,6 @@ class TdbuBlindCard extends HTMLElement {
   }
 
   _action(act) {
-    if (act === "info") { this._moreInfo("top"); return; }
-    if (act === "fav") {
-      const list = this._presets();
-      const fav = list.find((p) => p.name === this._config.favorite)
-        || (typeof this._config.favorite === "number" ? list[this._config.favorite] : undefined)
-        || list[1] || list[0];
-      this._applyPreset(fav);
-      return;
-    }
     const target = this._config.buttons_target === "top" ? ["top"]
       : this._config.buttons_target === "bottom" ? ["bottom"] : ["top", "bottom"];
     const svc = act === "open" ? "open_cover" : act === "close" ? "close_cover" : "stop_cover";

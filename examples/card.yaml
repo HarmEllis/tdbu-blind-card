@@ -17,7 +17,6 @@ height: 280
 step: 5
 collision: block
 scene: /local/window-view.jpg
-favorite: Daylight
 presets:
   - name: Open
     sub: all open

@@ -45,3 +45,11 @@
 - Presets now honour `invert_top` / `invert_bottom`. Dragging a handle already
   mirrored the position on such a card, but a preset sent its number straight
   through, so it drove the inverted rail to the opposite end.
+
+## 1.5.0
+
+- Dropped the settings and favourite buttons. Both duplicated something already
+  on the card: more-info is reachable by tapping a rail's label, and the
+  favourite ran a preset that is already a chip. `favorite` is gone with it.
+- The remaining open / stop / close buttons move to a column beside the window
+  when the card is wide enough, and fall back to a row underneath when it is not.
