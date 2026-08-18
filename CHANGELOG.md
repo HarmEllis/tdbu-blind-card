@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Scale the complete blind illustration down when a card is narrower than its
+  preferred width, preventing it from overflowing while keeping the control
+  buttons at their full touch-target size.
+- Let preset chips shrink to the available width on exceptionally narrow cards.
+
 ## 1.0.0
 
 - Initial release.

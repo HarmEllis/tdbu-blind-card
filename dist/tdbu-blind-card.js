@@ -259,7 +259,7 @@ const defaultPresets = (t, between) => (between
     ]);
 
 const STYLES = `
-:host { display: block; }
+:host { display: block; min-width: 0; }
 ha-card {
   --tdbu-fg: var(--primary-text-color);
   --tdbu-dim: var(--secondary-text-color);
@@ -290,13 +290,15 @@ ha-card.dark {
   background: #1c1c1e;
   color: #f2f2f5;
 }
-.wrap { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.wrap { padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; box-sizing: border-box; }
 
 .head { display: flex; align-items: center; justify-content: center; position: relative; min-height: 24px; }
 .head .title { font-size: 16px; font-weight: 600; color: var(--tdbu-fg); text-align: center; }
 .head .sub { position: absolute; right: 0; font-size: 12px; color: var(--tdbu-dim); }
 
-.stage { display: flex; gap: 10px; justify-content: center; align-items: stretch; }
+.stage { display: flex; gap: 10px; justify-content: center; align-items: stretch; width: 100%; min-width: 0; }
+.visual { position: relative; flex: 0 0 auto; min-width: 0; }
+.visual-inner { display: flex; gap: 10px; height: 100%; transform-origin: top left; }
 .rails { position: relative; width: 96px; flex: 0 0 96px; }
 
 .tag { position: absolute; right: 42px; text-align: right; white-space: nowrap; line-height: 1.2; cursor: pointer; }
@@ -368,12 +370,13 @@ ha-card.dark {
 .btns button:hover { background: var(--tdbu-chip-hover); }
 .btns button:active { transform: scale(.96); }
 
+.quick { min-width: 0; }
 .quick .quick-label { font-size: 12px; color: var(--tdbu-dim); margin-bottom: 6px; }
-.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; }
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(70px, 100%), 1fr)); gap: 8px; min-width: 0; }
 .chips button {
   border: none; border-radius: 12px; cursor: pointer; padding: 8px 4px;
   background: var(--tdbu-chip); color: var(--tdbu-fg);
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0;
 }
 .chips button:hover { background: var(--tdbu-chip-hover); }
 .chips button:active { transform: scale(.97); }
@@ -537,24 +540,28 @@ class TdbuBlindCard extends HTMLElement {
     card.innerHTML = `
       <div class="wrap">
         <div class="head"><div class="title"></div><div class="sub"></div></div>
-        <div class="stage" style="height:${Number(c.height) || 260}px">
-          <div class="rails">
-            <div class="tag tag-top" data-part="top"><span class="cap">${esc(topLabel)}</span><span class="val">\u2014</span></div>
-            <div class="tag tag-bottom" data-part="bottom"><span class="cap">${esc(bottomLabel)}</span><span class="val">\u2014</span></div>
-            <div class="dual smooth">
-              <div class="bar"></div>
-              <div class="seg seg-a"></div>
-              <div class="seg seg-b"></div>
-              <div class="thumb thumb-top" data-part="top" tabindex="0" role="slider" aria-orientation="vertical"
-                   aria-label="${esc(topLabel)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="grip"></span></div>
-              <div class="thumb thumb-bottom" data-part="bottom" tabindex="0" role="slider" aria-orientation="vertical"
-                   aria-label="${esc(bottomLabel)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="grip"></span></div>
+        <div class="stage">
+          <div class="visual">
+            <div class="visual-inner" style="height:${Number(c.height) || 260}px">
+              <div class="rails">
+                <div class="tag tag-top" data-part="top"><span class="cap">${esc(topLabel)}</span><span class="val">\u2014</span></div>
+                <div class="tag tag-bottom" data-part="bottom"><span class="cap">${esc(bottomLabel)}</span><span class="val">\u2014</span></div>
+                <div class="dual smooth">
+                  <div class="bar"></div>
+                  <div class="seg seg-a"></div>
+                  <div class="seg seg-b"></div>
+                  <div class="thumb thumb-top" data-part="top" tabindex="0" role="slider" aria-orientation="vertical"
+                       aria-label="${esc(topLabel)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="grip"></span></div>
+                  <div class="thumb thumb-bottom" data-part="bottom" tabindex="0" role="slider" aria-orientation="vertical"
+                       aria-label="${esc(bottomLabel)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="grip"></span></div>
+                </div>
+              </div>
+              <div class="window smooth">
+                <div class="scene"></div>
+                <div class="shade top"></div>
+                <div class="shade bottom"></div>
+              </div>
             </div>
-          </div>
-          <div class="window smooth">
-            <div class="scene"></div>
-            <div class="shade top"></div>
-            <div class="shade bottom"></div>
           </div>
           <div class="btns side">
             <button data-act="close" title="${esc(t("close"))}"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
@@ -575,6 +582,8 @@ class TdbuBlindCard extends HTMLElement {
     this._el = {
       wrap: card.querySelector(".wrap"),
       stage: card.querySelector(".stage"),
+      visual: card.querySelector(".visual"),
+      visualInner: card.querySelector(".visual-inner"),
       rails: card.querySelector(".rails"),
       btns: card.querySelector(".btns"),
       quick: card.querySelector(".quick"),
@@ -691,19 +700,40 @@ class TdbuBlindCard extends HTMLElement {
 
   /**
    * The buttons sit beside the window when the card is wide enough for them,
-   * and drop to a row underneath it when it is not.
+   * and drop to a row underneath it when it is not. If even the illustration
+   * itself does not fit, scale that as a single unit so none of it overflows.
+   * The buttons stay at their full touch-target size.
    */
   _layoutButtons() {
     const el = this._el;
     const avail = el.stage.clientWidth;
     if (!avail) return;
-    const needed = el.rails.offsetWidth + el.window.offsetWidth + 46 + 20;
-    const side = needed + 4 <= avail;
-    if (side === (el.btns.parentElement === el.stage)) return;
+
+    const naturalHeight = Number(this._config.height) || 260;
+    const visualGap = 10;
+    const controlsGap = 10;
+    const controlsWidth = 46;
+    const naturalWidth = el.rails.offsetWidth + el.window.offsetWidth + visualGap;
+    const side = naturalWidth + controlsGap + controlsWidth <= avail;
+    const visualAvail = Math.max(1, avail - (side ? controlsGap + controlsWidth : 0));
+    const scale = Math.min(1, visualAvail / naturalWidth);
+    const visualWidth = naturalWidth * scale;
+    const visualHeight = naturalHeight * scale;
+    const layoutKey = [Math.round(avail * 10), side, Math.round(scale * 10000)].join(":");
+    if (layoutKey === this._layoutKey) return;
+    this._layoutKey = layoutKey;
+
     el.btns.classList.toggle("side", side);
     el.btns.classList.toggle("below", !side);
     if (side) el.stage.appendChild(el.btns);
     else el.wrap.insertBefore(el.btns, el.quick || null);
+
+    el.visual.style.width = `${visualWidth}px`;
+    el.visual.style.height = `${visualHeight}px`;
+    el.visualInner.style.width = `${naturalWidth}px`;
+    el.visualInner.style.height = `${naturalHeight}px`;
+    el.visualInner.style.transform = `scale(${scale})`;
+    el.stage.style.height = `${visualHeight}px`;
   }
 
   _setSmooth(on) {
