@@ -2,7 +2,7 @@
 
 [![hacs](https://img.shields.io/badge/HACS-custom-41BDF5.svg)](https://hacs.xyz)
 
-![TDBU Blind Card preview](assets/tdbu-blind-card-preview.svg)
+![TDBU Blind Card preview](assets/tdbu-blind-card-preview.png)
 
 A Lovelace card for **top-down/bottom-up** blinds — the ones that are exposed in
 Home Assistant as *two* cover entities, one for the top rail and one for the
