@@ -15,7 +15,7 @@ appearance: dark
 display: position
 height: 280
 step: 5
-prevent_overlap: true
+collision: block
 scene: /local/window-view.jpg
 favorite: Daylight
 presets:

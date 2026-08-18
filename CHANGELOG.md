@@ -18,3 +18,12 @@
 - `invert_top` / `invert_bottom` are now a pure mirror of a single rail, on top
   of whichever layout is selected.
 - Simplified the `coverage` display to the complement of the cover position.
+
+## 1.2.0
+
+- Replaced the two separate sliders with a single bar carrying two handles, so
+  each handle sits exactly where its rail hangs in the window.
+- Larger, grippable 30px handles; the value labels are fixed above and below the
+  bar.
+- Added `collision` (`block` / `push` / `none`), replacing `prevent_overlap`.
+- Dragging still sends nothing; each handle commands its rail once on release.

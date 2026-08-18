@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "1.2.0";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -56,7 +56,10 @@ const TRANSLATIONS = {
     ed_step: "Step size",
     ed_invert_top: "Invert top",
     ed_invert_bottom: "Invert bottom",
-    ed_prevent_overlap: "Keep rails from crossing",
+    ed_collision: "Dragging past the other rail",
+    ed_collision_block: "Stops against it",
+    ed_collision_push: "Pushes it along",
+    ed_collision_none: "Allowed to cross",
   },
   nl: {
     top: "Boven",
@@ -98,7 +101,10 @@ const TRANSLATIONS = {
     ed_step: "Stapgrootte",
     ed_invert_top: "Boven omkeren",
     ed_invert_bottom: "Onder omkeren",
-    ed_prevent_overlap: "Rails niet laten kruisen",
+    ed_collision: "Voorbij de andere rail slepen",
+    ed_collision_block: "Blokkeert ertegen",
+    ed_collision_push: "Duwt hem mee",
+    ed_collision_none: "Mag kruisen",
   },
   de: {
     top: "Oben",
@@ -140,7 +146,10 @@ const TRANSLATIONS = {
     ed_step: "Schrittweite",
     ed_invert_top: "Oben umkehren",
     ed_invert_bottom: "Unten umkehren",
-    ed_prevent_overlap: "Schienen nicht kreuzen lassen",
+    ed_collision: "\u00dcber die andere Schiene hinaus ziehen",
+    ed_collision_block: "St\u00f6\u00dft dagegen",
+    ed_collision_push: "Schiebt sie mit",
+    ed_collision_none: "Darf kreuzen",
   },
   fr: {
     top: "Haut",
@@ -182,7 +191,10 @@ const TRANSLATIONS = {
     ed_step: "Pas",
     ed_invert_top: "Inverser le haut",
     ed_invert_bottom: "Inverser le bas",
-    ed_prevent_overlap: "Empêcher le croisement des rails",
+    ed_collision: "Glisser au-del\u00e0 de l\u0027autre rail",
+    ed_collision_block: "S\u0027arr\u00eate contre",
+    ed_collision_push: "Le pousse",
+    ed_collision_none: "Peut croiser",
   },
 };
 
@@ -250,27 +262,40 @@ ha-card.dark {
 .head .title { font-size: 16px; font-weight: 600; color: var(--tdbu-fg); text-align: center; }
 .head .sub { position: absolute; right: 0; font-size: 12px; color: var(--tdbu-dim); }
 
-.stage { display: flex; gap: 14px; justify-content: center; align-items: stretch; }
-.rails { width: 74px; flex: 0 0 74px; display: flex; flex-direction: column; gap: 10px; }
-.rail { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; }
-.rail .lbl { font-size: 12px; color: var(--tdbu-dim); line-height: 1.2; cursor: pointer; }
-.rail .val { font-size: 17px; font-weight: 600; color: var(--tdbu-fg); line-height: 1.3; margin-bottom: 6px; }
-.rail .val.off { color: var(--tdbu-dim); }
-.rail .val.mem { text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: var(--tdbu-dim); }
-.track {
-  position: relative; width: 22px; margin-left: 3px; flex: 1 1 auto; min-height: 40px;
-  touch-action: none; cursor: pointer; outline: none;
+.stage { display: flex; gap: 10px; justify-content: center; align-items: stretch; }
+.rails { position: relative; width: 96px; flex: 0 0 96px; }
+
+.tag { position: absolute; right: 42px; text-align: right; white-space: nowrap; line-height: 1.2; cursor: pointer; }
+.tag-top { top: 0; }
+.tag-bottom { bottom: 0; display: flex; flex-direction: column-reverse; align-items: flex-end; }
+.tag .cap { display: block; font-size: 12px; color: var(--tdbu-dim); }
+.tag .val { display: block; font-size: 18px; font-weight: 600; color: var(--tdbu-fg); }
+.tag .val.off { color: var(--tdbu-dim); }
+.tag .val.mem { text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: var(--tdbu-dim); }
+
+.dual { position: absolute; right: 0; top: 0; bottom: 0; width: 34px; touch-action: none; cursor: pointer; }
+.dual .bar {
+  position: absolute; left: 50%; transform: translateX(-50%); width: 8px; top: 0; bottom: 0;
+  border-radius: 4px; background: var(--tdbu-track);
 }
-.track:focus-visible .thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--tdbu-accent) 55%, transparent); }
-.track .bar { position: absolute; left: 8px; width: 6px; top: 0; bottom: 0; border-radius: 3px; background: var(--tdbu-track); }
-.track .fill { position: absolute; left: 8px; width: 6px; border-radius: 3px; background: var(--tdbu-accent); opacity: .85; }
-.track .thumb {
-  position: absolute; left: 50%; width: 16px; height: 16px; border-radius: 50%;
-  background: var(--tdbu-thumb); transform: translate(-50%,-50%);
-  box-shadow: 0 1px 3px rgba(0,0,0,.35);
+.dual .seg {
+  position: absolute; left: 50%; transform: translateX(-50%); width: 8px;
+  border-radius: 4px; background: var(--tdbu-accent); opacity: .8;
 }
-.track.smooth .fill, .track.smooth .thumb { transition: top .35s ease, height .35s ease; }
-.rail.unknown .track { opacity: .55; }
+.dual .thumb {
+  position: absolute; left: 50%; width: 30px; height: 30px; border-radius: 50%;
+  transform: translate(-50%, -50%); background: var(--tdbu-thumb); color: var(--tdbu-chip);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); cursor: grab; outline: none; touch-action: none;
+}
+.dual .thumb:active { cursor: grabbing; }
+.dual .thumb:focus-visible { box-shadow: 0 0 0 4px color-mix(in srgb, var(--tdbu-accent) 50%, transparent); }
+.dual .thumb.off { opacity: .5; }
+.dual .grip {
+  width: 12px; height: 2px; border-radius: 1px; background: currentColor;
+  box-shadow: 0 -5px 0 currentColor, 0 5px 0 currentColor;
+}
+.dual.smooth .thumb, .dual.smooth .seg { transition: top .35s ease, height .35s ease; }
 
 .window {
   position: relative; height: 100%; aspect-ratio: 3 / 4; flex: 0 0 auto;
@@ -346,12 +371,16 @@ class TdbuBlindCard extends HTMLElement {
       layout: "between",
       display: "position",
       step: 1,
-      prevent_overlap: true,
+      collision: "block",
       invert_top: false,
       invert_bottom: false,
       scene: "gradient",
       ...config,
     };
+    // 1.1 and earlier expressed this as a boolean.
+    if (config.collision === undefined && config.prevent_overlap === false) {
+      this._config.collision = "none";
+    }
     this._teardown();
   }
 
@@ -469,21 +498,16 @@ class TdbuBlindCard extends HTMLElement {
         <div class="head"><div class="title"></div><div class="sub"></div></div>
         <div class="stage" style="height:${Number(c.height) || 260}px">
           <div class="rails">
-            <div class="rail" data-part="top">
-              <div class="lbl">${esc(topLabel)}</div>
-              <div class="val">—</div>
-              <div class="track smooth" tabindex="0" role="slider" aria-label="${esc(topLabel)}"
-                   aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div class="bar"></div><div class="fill"></div><div class="thumb"></div>
-              </div>
-            </div>
-            <div class="rail" data-part="bottom">
-              <div class="lbl">${esc(bottomLabel)}</div>
-              <div class="val">—</div>
-              <div class="track smooth" tabindex="0" role="slider" aria-label="${esc(bottomLabel)}"
-                   aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div class="bar"></div><div class="fill"></div><div class="thumb"></div>
-              </div>
+            <div class="tag tag-top" data-part="top"><span class="cap">${esc(topLabel)}</span><span class="val">\u2014</span></div>
+            <div class="tag tag-bottom" data-part="bottom"><span class="cap">${esc(bottomLabel)}</span><span class="val">\u2014</span></div>
+            <div class="dual smooth">
+              <div class="bar"></div>
+              <div class="seg seg-a"></div>
+              <div class="seg seg-b"></div>
+              <div class="thumb thumb-top" data-part="top" tabindex="0" role="slider" aria-orientation="vertical"
+                   aria-label="${esc(topLabel)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="grip"></span></div>
+              <div class="thumb thumb-bottom" data-part="bottom" tabindex="0" role="slider" aria-orientation="vertical"
+                   aria-label="${esc(bottomLabel)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="grip"></span></div>
             </div>
           </div>
           <div class="window smooth">
@@ -517,19 +541,17 @@ class TdbuBlindCard extends HTMLElement {
       shadeBottom: card.querySelector(".shade.bottom"),
       scene: card.querySelector(".scene"),
     };
-    this._rails = {};
-    card.querySelectorAll(".rail").forEach((r) => {
-      const part = r.dataset.part;
-      this._rails[part] = {
-        root: r,
-        val: r.querySelector(".val"),
-        track: r.querySelector(".track"),
-        fill: r.querySelector(".fill"),
-        thumb: r.querySelector(".thumb"),
-      };
-      r.querySelector(".lbl").addEventListener("click", () => this._moreInfo(part));
-      this._bindTrack(part, this._rails[part].track);
+    this._dual = card.querySelector(".dual");
+    this._seg = { a: card.querySelector(".seg-a"), b: card.querySelector(".seg-b") };
+    this._thumb = { top: card.querySelector(".thumb-top"), bottom: card.querySelector(".thumb-bottom") };
+    this._tagVal = {
+      top: card.querySelector(".tag-top .val"),
+      bottom: card.querySelector(".tag-bottom .val"),
+    };
+    card.querySelectorAll(".tag").forEach((el) => {
+      el.addEventListener("click", () => this._moreInfo(el.dataset.part));
     });
+    this._bindDual();
 
     if (c.scene && c.scene !== "gradient" && c.scene !== "none") {
       this._el.scene.style.backgroundImage = `url("${c.scene}")`;
@@ -549,57 +571,97 @@ class TdbuBlindCard extends HTMLElement {
 
   /* ---------------- interaction ---------------- */
 
-  _bindTrack(part, track) {
+  _bindDual() {
+    const track = this._dual;
+    const THUMB = 30;
+
     const fracFromY = (y) => {
       const r = track.getBoundingClientRect();
-      return this._limit(part, clamp((y - (r.top + 8)) / Math.max(1, r.height - 16), 0, 1));
+      return clamp((y - (r.top + THUMB / 2)) / Math.max(1, r.height - THUMB), 0, 1);
     };
+
+    // Grabbing a handle picks that one; grabbing the bar picks the nearest,
+    // and when both sit in the same spot the direction of the grab decides.
+    const pick = (frac, target) => {
+      const onThumb = target && target.closest && target.closest(".thumb");
+      if (onThumb) return onThumb.dataset.part;
+      const fTop = this._railFrac("top");
+      const fBot = this._railFrac("bottom");
+      if (Math.abs(fTop - fBot) < 0.005) return frac < fTop ? "top" : "bottom";
+      return Math.abs(frac - fTop) <= Math.abs(frac - fBot) ? "top" : "bottom";
+    };
+
     const onMove = (ev) => {
       if (!this._drag) return;
       ev.preventDefault();
-      this._drag.frac = fracFromY(ev.clientY);
+      this._drag = this._resolveDrag(this._drag.part, fracFromY(ev.clientY));
       this._render();
     };
     const onUp = () => {
       if (!this._drag) return;
-      const frac = this._drag.frac;
+      const { part, frac, otherPart, otherFrac } = this._drag;
       this._drag = null;
-      track.classList.add("smooth");
-      this._el.window.classList.add("smooth");
+      this._setSmooth(true);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      // Nothing is sent while dragging — one command per handle on release.
       this._commit(part, this._snap(this._fracToPos(part, frac)));
+      if (otherFrac !== null) this._commit(otherPart, this._snap(this._fracToPos(otherPart, otherFrac)));
     };
+
     track.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
-      track.classList.remove("smooth");
-      this._el.window.classList.remove("smooth");
-      this._drag = { part, frac: fracFromY(ev.clientY) };
+      const frac = fracFromY(ev.clientY);
+      this._setSmooth(false);
+      this._drag = this._resolveDrag(pick(frac, ev.target), frac);
       this._render();
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
     });
-    track.addEventListener("keydown", (ev) => {
-      const cur = this._position(part);
-      const base = cur === null ? 100 : cur;
-      let next = null;
-      if (ev.key === "ArrowUp" || ev.key === "ArrowRight") next = base + 5;
-      else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") next = base - 5;
-      else if (ev.key === "Home") next = 100;
-      else if (ev.key === "End") next = 0;
-      if (next === null) return;
-      ev.preventDefault();
-      this._commit(part, this._snap(clamp(next, 0, 100)));
+
+    // Arrow keys move a handle the way it visually travels, whichever end of
+    // the position scale that happens to be.
+    Object.entries(this._thumb).forEach(([part, el]) => {
+      el.addEventListener("keydown", (ev) => {
+        let frac = this._railFrac(part);
+        if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") frac -= 0.05;
+        else if (ev.key === "ArrowDown" || ev.key === "ArrowRight") frac += 0.05;
+        else if (ev.key === "Home") frac = 0;
+        else if (ev.key === "End") frac = 1;
+        else return;
+        ev.preventDefault();
+        const d = this._resolveDrag(part, clamp(frac, 0, 1));
+        this._commit(d.part, this._snap(this._fracToPos(d.part, d.frac)));
+        if (d.otherFrac !== null) this._commit(d.otherPart, this._snap(this._fracToPos(d.otherPart, d.otherFrac)));
+      });
     });
   }
 
-  /** Keeps the top rail from moving below the bottom rail and vice versa. */
-  _limit(part, frac) {
-    if (!this._config.prevent_overlap) return frac;
-    const other = part === "top" ? this._railFrac("bottom") : this._railFrac("top");
-    return part === "top" ? Math.min(frac, other) : Math.max(frac, other);
+  _setSmooth(on) {
+    this._dual.classList.toggle("smooth", on);
+    this._el.window.classList.toggle("smooth", on);
+  }
+
+  /**
+   * Works out where a handle ends up, and whether it takes the other one with
+   * it. `collision`: "block" stops against the other handle, "push" shoves it
+   * along, "none" lets them cross.
+   */
+  _resolveDrag(part, frac) {
+    const otherPart = part === "top" ? "bottom" : "top";
+    const other = this._railFrac(otherPart);
+    const mode = this._config.collision;
+    let otherFrac = null;
+
+    if (mode === "push") {
+      if (part === "top" && frac > other) otherFrac = frac;
+      if (part === "bottom" && frac < other) otherFrac = frac;
+    } else if (mode !== "none") {
+      frac = part === "top" ? Math.min(frac, other) : Math.max(frac, other);
+    }
+    return { part, frac, otherPart, otherFrac };
   }
 
   _snap(pos) {
@@ -714,10 +776,17 @@ class TdbuBlindCard extends HTMLElement {
   _render() {
     if (!this._built) return;
     const c = this._config;
-    let fTop = this._drag && this._drag.part === "top" ? this._drag.frac : this._railFrac("top");
-    let fBot = this._drag && this._drag.part === "bottom" ? this._drag.frac : this._railFrac("bottom");
-    if (c.prevent_overlap && fTop > fBot) {
-      if (this._drag && this._drag.part === "top") fTop = fBot; else fBot = fTop;
+    const d = this._drag;
+    const pick = (part) => {
+      if (!d) return this._railFrac(part);
+      if (d.part === part) return d.frac;
+      if (d.otherPart === part && d.otherFrac !== null) return d.otherFrac;
+      return this._railFrac(part);
+    };
+    let fTop = pick("top");
+    let fBot = pick("bottom");
+    if (c.collision !== "none" && fTop > fBot) {
+      if (d && d.part === "top") fBot = fTop; else fTop = fBot;
     }
 
     const between = this._between();
@@ -734,30 +803,45 @@ class TdbuBlindCard extends HTMLElement {
       this._el.shadeBottom.style.height = ((1 - fBot) * 100).toFixed(2) + "%";
     }
 
-    const paint = (part, frac) => {
-      const r = this._rails[part];
+    // Handles travel between the two half-thumb insets; the segments reuse the
+    // same expression so they always line up with them.
+    const at = (f) => `calc(15px + ${f} * (100% - 30px))`;
+    this._thumb.top.style.top = at(fTop);
+    this._thumb.bottom.style.top = at(fBot);
+
+    if (between) {
+      // The filled segment is the fabric, so it sits between the handles.
+      this._seg.a.style.top = at(fTop);
+      this._seg.a.style.height = `calc(${Math.max(0, fBot - fTop)} * (100% - 30px))`;
+      this._seg.a.style.bottom = "auto";
+      this._seg.b.style.height = "0";
+    } else {
+      // Fabric sits outside the handles, so fill both ends instead.
+      this._seg.a.style.top = "0";
+      this._seg.a.style.height = at(fTop);
+      this._seg.a.style.bottom = "auto";
+      this._seg.b.style.top = at(fBot);
+      this._seg.b.style.bottom = "0";
+      this._seg.b.style.height = "auto";
+    }
+
+    const label = (part, frac) => {
       const res = this._resolve(part);
-      const dragging = this._drag && this._drag.part === part;
-      const pos = dragging ? this._snap(this._fracToPos(part, frac)) : res.value;
+      const live = d && (d.part === part || (d.otherPart === part && d.otherFrac !== null));
+      const pos = live ? this._snap(this._fracToPos(part, frac)) : res.value;
       const known = pos !== null;
-      const remembered = !dragging && res.source === "memory";
-      // Cover positions are percent-open, so "covered" is simply the complement.
-      const shown = c.display === "position" ? pos : 100 - pos;
+      const remembered = !live && res.source === "memory";
+      const val = this._tagVal[part];
 
-      r.val.textContent = known ? `${shown}%` : "—";
-      r.val.classList.toggle("off", !known);
-      r.val.classList.toggle("mem", remembered);
-      r.val.title = remembered ? this._t("remembered") : "";
-      r.root.classList.toggle("unknown", !known);
-      r.track.setAttribute("aria-valuenow", known ? String(pos) : "0");
-
-      const t = `calc(8px + ${frac} * (100% - 16px))`;
-      r.thumb.style.top = t;
-      if (part === "top") { r.fill.style.top = "0px"; r.fill.style.height = t; }
-      else { r.fill.style.top = t; r.fill.style.bottom = "0px"; r.fill.style.height = "auto"; }
+      val.textContent = known ? `${c.display === "position" ? pos : 100 - pos}%` : "\u2014";
+      val.classList.toggle("off", !known);
+      val.classList.toggle("mem", remembered);
+      val.title = remembered ? this._t("remembered") : "";
+      this._thumb[part].classList.toggle("off", !known);
+      this._thumb[part].setAttribute("aria-valuenow", known ? String(pos) : "0");
     };
-    paint("top", fTop);
-    paint("bottom", fBot);
+    label("top", fTop);
+    label("bottom", fBot);
   }
 }
 
@@ -785,7 +869,10 @@ const editorSchema = (t) => [
       { name: "step", selector: { number: { min: 1, max: 25, step: 1, mode: "box", unit_of_measurement: "%" } } },
       { name: "invert_top", selector: { boolean: {} } },
       { name: "invert_bottom", selector: { boolean: {} } },
-      { name: "prevent_overlap", selector: { boolean: {} } },
+      { name: "collision", selector: { select: { mode: "dropdown", options: [
+        { value: "block", label: t("ed_collision_block") },
+        { value: "push", label: t("ed_collision_push") },
+        { value: "none", label: t("ed_collision_none") }] } } },
     ],
   },
 ];
