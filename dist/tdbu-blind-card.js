@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.4.0";
+const CARD_VERSION = "1.4.1";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -764,10 +764,20 @@ class TdbuBlindCard extends HTMLElement {
     this._render();
   }
 
+  /**
+   * Preset positions describe the blind as the card draws it, so a card with
+   * invert_top / invert_bottom set has to mirror them on the way out — exactly
+   * as dragging a handle already does.
+   */
+  _toRaw(part, value) {
+    const inv = part === "top" ? this._config.invert_top : this._config.invert_bottom;
+    return inv ? 100 - value : value;
+  }
+
   _applyPreset(preset) {
     if (!preset) return;
-    if (typeof preset.top === "number") this._commit("top", this._snap(preset.top));
-    if (typeof preset.bottom === "number") this._commit("bottom", this._snap(preset.bottom));
+    if (typeof preset.top === "number") this._commit("top", this._snap(this._toRaw("top", preset.top)));
+    if (typeof preset.bottom === "number") this._commit("bottom", this._snap(this._toRaw("bottom", preset.bottom)));
   }
 
   _moreInfo(part) {

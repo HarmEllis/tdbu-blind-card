@@ -39,3 +39,9 @@
 
 - Added a "Top strip" preset to the `between` set, and ordered that set from
   least to most fabric.
+
+## 1.4.1
+
+- Presets now honour `invert_top` / `invert_bottom`. Dragging a handle already
+  mirrored the position on such a card, but a preset sent its number straight
+  through, so it drove the inverted rail to the opposite end.

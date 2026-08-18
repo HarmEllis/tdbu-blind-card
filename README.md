@@ -104,7 +104,7 @@ by `favorite`, or the second one in the list if you don't set it.
 presets:
   - name: Open
     sub: all open
-    top: 0           # positions are raw cover positions: 100 = open, 0 = closed
+    top: 0           # cover positions as the card draws them: 100 = open, 0 = closed
     bottom: 100
   - name: Privacy
     sub: bottom half
@@ -115,6 +115,11 @@ presets:
     bottom: 20       # omit `top` to leave that rail untouched
 favorite: Privacy
 ```
+
+Preset positions describe the blind the way the card draws it. On a card with
+`invert_top` or `invert_bottom` set, the card mirrors them when it sends the
+command, so the same preset means the same thing on every card even when one
+blind reports its position the other way round.
 
 Because a position number lands somewhere different in each layout, the built-in
 defaults differ too.
