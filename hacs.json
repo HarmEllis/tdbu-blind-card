@@ -1,0 +1,6 @@
+{
+  "name": "TDBU Blind Card",
+  "render_readme": true,
+  "filename": "tdbu-blind-card.js",
+  "homeassistant": "2024.8.0"
+}

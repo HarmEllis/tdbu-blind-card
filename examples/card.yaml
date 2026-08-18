@@ -1,0 +1,37 @@
+# Minimal
+type: custom:tdbu-blind-card
+top_entity: cover.bedroom_blind_top
+bottom_entity: cover.bedroom_blind_bottom
+
+---
+# Full
+type: custom:tdbu-blind-card
+name: Bedroom
+top_entity: cover.bedroom_blind_top
+bottom_entity: cover.bedroom_blind_bottom
+top_position_entity: input_number.bedroom_blind_top_position
+bottom_position_entity: input_number.bedroom_blind_bottom_position
+appearance: dark
+display: position
+height: 280
+step: 5
+prevent_overlap: true
+scene: /local/window-view.jpg
+favorite: Daylight
+presets:
+  - name: Open
+    sub: all open
+    top: 100
+    bottom: 100
+  - name: Daylight
+    sub: top 20%
+    top: 80
+    bottom: 100
+  - name: Privacy
+    sub: bottom 60%
+    top: 100
+    bottom: 40
+  - name: Closed
+    sub: all closed
+    top: 0
+    bottom: 0

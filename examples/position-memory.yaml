@@ -1,0 +1,35 @@
+# Mirror any position a TDBU cover *does* report into the card's memory helpers.
+#
+# Useful next to the card's own writes: it also catches positions set by
+# automations, scripts or the more-info dialog. Covers that never report a
+# position (motionblinds_ble) simply never trigger this automation — the card
+# keeps the value it stored itself.
+#
+# Create the helpers in Settings > Devices & services > Helpers > Number,
+# range 0-100, step 1, unit %. Leave "initial value" empty so the value
+# survives a restart.
+
+alias: TDBU blinds - remember reported position
+description: Copies a cover's reported position into its memory helper.
+mode: parallel
+max: 10
+variables:
+  memory:
+    cover.bedroom_blind_top: input_number.bedroom_blind_top_position
+    cover.bedroom_blind_bottom: input_number.bedroom_blind_bottom_position
+triggers:
+  - trigger: state
+    entity_id:
+      - cover.bedroom_blind_top
+      - cover.bedroom_blind_bottom
+    attribute: current_position
+conditions:
+  - condition: template
+    value_template: >
+      {{ trigger.to_state.attributes.current_position is number }}
+actions:
+  - action: input_number.set_value
+    target:
+      entity_id: "{{ memory[trigger.entity_id] }}"
+    data:
+      value: "{{ trigger.to_state.attributes.current_position }}"
