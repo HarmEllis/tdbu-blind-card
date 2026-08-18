@@ -12,22 +12,6 @@ bottom rail (MotionBlinds, Coulisse, Somfy, Zigbee TDBU shades, honeycomb/pleate
 The card shows both shades in one window illustration, with a vertical slider per
 rail, a control row and configurable quick actions.
 
-```
-┌────────────────────────────────┐
-│            Bedroom             │
-│   Top    ┌───────────────────┐ │
-│    10%   │                   │ │  ← opening
-│       ●══╪═══════════════════╡ │  ← top rail
-│       │  │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ │
-│       │  │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ │  fabric
-│       ●══╪═══════════════════╡ │  ← bottom rail
-│    65%   │                   │ │  ← opening
-│  Bottom  └───────────────────┘ │
-│  Quick actions                 │
-│  [Open][Top strip][Band][Privacy] │
-└────────────────────────────────┘
-```
-
 ## Features
 
 - One card per blind instead of two disconnected cover rows.
