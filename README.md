@@ -11,28 +11,29 @@ The card shows both shades in one window illustration, with a vertical slider pe
 rail, a control row and configurable quick actions.
 
 ```
-┌──────────────────────────────┐
-│           Bedroom            │
-│  Top    ┌──────────────────┐ │
-│  10%    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ │  ← top shade
-│   ●     │                  │ │
-│   │     │      (view)      │ │
-│  Bottom │                  │ │
-│  65%    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ │  ← bottom shade
-│   ●     └──────────────────┘ │
-│  [⚙] [▼] [■] [▲] [♥]         │
-│  Quick actions               │
+┌────────────────────────────────┐
+│            Bedroom             │
+│   Top    ┌───────────────────┐ │
+│    10%   │                   │ │  ← opening
+│       ●══╪═══════════════════╡ │  ← top rail
+│       │  │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ │
+│       │  │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ │  fabric
+│       ●══╪═══════════════════╡ │  ← bottom rail
+│    65%   │                   │ │  ← opening
+│  Bottom  └───────────────────┘ │
+│  [⚙] [▼] [■] [▲] [♥]           │
+│  Quick actions                 │
 │  [Open][Daylight][Privacy][Closed] │
-└──────────────────────────────┘
+└────────────────────────────────┘
 ```
 
 ## Features
 
 - One card per blind instead of two disconnected cover rows.
 - Window illustration that follows both rails live while you drag.
-- Sliders map to the **physical rail position**: the top thumb is where the top
-  rail hangs, the bottom thumb is where the bottom rail sits.
-- Rails cannot cross (optional).
+- One bar with two handles, sitting exactly where the rails hang in the window,
+  so you always drag in the direction the rail travels.
+- Handles cannot pass each other — or push each other along, your choice.
 - Open / stop / close for both shades, plus a favourite button.
 - Quick-action presets, fully configurable.
 - **Position memory** for integrations that never report a position (see below).
@@ -81,7 +82,7 @@ Everything else is optional.
 | `step` | number | `1` | Snap step for the sliders, in percent. |
 | `invert_top` | bool | `false` | Flip the top rail's direction if the illustration does not match reality. |
 | `invert_bottom` | bool | `false` | Same, for the bottom rail. |
-| `prevent_overlap` | bool | `true` | Stop the top rail from being dragged past the bottom rail. |
+| `collision` | `block` \| `push` \| `none` | `block` | What happens when you drag a handle past the other one. `block` stops it against the other handle, `push` drags the other one along (and commands both rails on release), `none` lets them cross. Replaces `prevent_overlap`, which is still honoured when set to `false`. |
 | `buttons_target` | `both` \| `top` \| `bottom` | `both` | Which shade(s) the ▲ / ■ / ▼ buttons control. |
 | `scene` | `gradient` \| `none` \| image path | `gradient` | What is drawn behind the shades. Any `/local/...` image works. |
 | `presets` | list | Open / Daylight / Privacy / Closed | Quick actions, see below. |
@@ -168,8 +169,9 @@ bottom rail. This is the classic TDBU pleated/honeycomb blind.
 **`split`** — two independent shades, one dropping from the top and one rising
 from the bottom, leaving a gap in the middle.
 
-In both layouts each slider thumb sits where its rail sits in the window, so you
-always drag in the direction the rail travels.
+In both layouts the two handles sit where their rails sit in the window, so you
+always drag in the direction the rail travels. Nothing is sent to the blind
+while you drag — each handle sends one `cover.set_cover_position` on release.
 
 ## How the geometry works
 
