@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.1.0";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -46,6 +46,9 @@ const TRANSLATIONS = {
     ed_appearance: "Appearance",
     ed_appearance_auto: "Follow theme",
     ed_appearance_dark: "Dark",
+    ed_layout: "Blind layout",
+    ed_layout_between: "One sheet between the rails (standard TDBU)",
+    ed_layout_split: "Two shades, view in the middle",
     ed_display: "Percentage shows",
     ed_display_coverage: "% covered by the shade",
     ed_display_position: "% open (cover position)",
@@ -85,6 +88,9 @@ const TRANSLATIONS = {
     ed_appearance: "Uiterlijk",
     ed_appearance_auto: "Volg thema",
     ed_appearance_dark: "Donker",
+    ed_layout: "Type pliss\u00e9",
+    ed_layout_between: "\u00c9\u00e9n doek tussen de rails (standaard TDBU)",
+    ed_layout_split: "Twee pliss\u00e9\u0027s, zicht in het midden",
     ed_display: "Percentage toont",
     ed_display_coverage: "% dicht (bedekking)",
     ed_display_position: "% open (coverpositie)",
@@ -124,6 +130,9 @@ const TRANSLATIONS = {
     ed_appearance: "Darstellung",
     ed_appearance_auto: "Theme folgen",
     ed_appearance_dark: "Dunkel",
+    ed_layout: "Aufbau",
+    ed_layout_between: "Ein Stoff zwischen den Schienen (Standard-TDBU)",
+    ed_layout_split: "Zwei Beh\u00e4nge, Sicht in der Mitte",
     ed_display: "Prozentwert zeigt",
     ed_display_coverage: "% geschlossen",
     ed_display_position: "% offen (Cover-Position)",
@@ -163,6 +172,9 @@ const TRANSLATIONS = {
     ed_appearance: "Apparence",
     ed_appearance_auto: "Suivre le thème",
     ed_appearance_dark: "Sombre",
+    ed_layout: "Disposition",
+    ed_layout_between: "Une toile entre les rails (TDBU standard)",
+    ed_layout_split: "Deux stores, vue au milieu",
     ed_display: "Le pourcentage indique",
     ed_display_coverage: "% couvert",
     ed_display_position: "% ouvert (position du volet)",
@@ -277,7 +289,10 @@ ha-card.dark {
 }
 .shade.top::after { bottom: 0; }
 .shade.bottom::before { top: 0; }
-.window.smooth .shade { transition: height .35s ease; }
+.shade.band::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--tdbu-rail);
+}
+.window.smooth .shade { transition: height .35s ease, top .35s ease; }
 
 .btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .btns button {
@@ -328,6 +343,7 @@ class TdbuBlindCard extends HTMLElement {
     this._config = {
       height: 260,
       appearance: "auto",
+      layout: "between",
       display: "position",
       step: 1,
       prevent_overlap: true,
@@ -402,23 +418,31 @@ class TdbuBlindCard extends HTMLElement {
 
   _position(part) { return this._resolve(part).value; }
 
+  /** True for a single sheet of fabric spanning between the two rails. */
+  _between() { return this._config.layout !== "split"; }
+
   /** Fraction 0..1 — distance from the top of the window down to this rail. */
   _railFrac(part) {
     const pos = this._position(part);
-    if (pos === null) return part === "top" ? 0 : 1;
+    if (pos === null) return this._between() ? 0.5 : part === "top" ? 0 : 1;
     return this._posToFrac(part, pos);
   }
 
   _posToFrac(part, pos) {
     const inv = part === "top" ? this._config.invert_top : this._config.invert_bottom;
-    if (part === "top") return inv ? pos / 100 : (100 - pos) / 100;
-    return inv ? (100 - pos) / 100 : pos / 100;
+    const between = this._between();
+    let frac;
+    if (part === "top") frac = between ? pos / 100 : (100 - pos) / 100;
+    else frac = between ? (100 - pos) / 100 : pos / 100;
+    return inv ? 1 - frac : frac;
   }
 
   _fracToPos(part, frac) {
     const inv = part === "top" ? this._config.invert_top : this._config.invert_bottom;
-    if (part === "top") return inv ? frac * 100 : 100 - frac * 100;
-    return inv ? 100 - frac * 100 : frac * 100;
+    const f = inv ? 1 - frac : frac;
+    const between = this._between();
+    if (part === "top") return between ? f * 100 : 100 - f * 100;
+    return between ? 100 - f * 100 : f * 100;
   }
 
   /* ---------------- DOM ---------------- */
@@ -696,8 +720,19 @@ class TdbuBlindCard extends HTMLElement {
       if (this._drag && this._drag.part === "top") fTop = fBot; else fBot = fTop;
     }
 
-    this._el.shadeTop.style.height = (fTop * 100).toFixed(2) + "%";
-    this._el.shadeBottom.style.height = ((1 - fBot) * 100).toFixed(2) + "%";
+    const between = this._between();
+    this._el.shadeTop.classList.toggle("band", between);
+    if (between) {
+      // One sheet of fabric spanning from the top rail down to the bottom rail.
+      this._el.shadeTop.style.top = (fTop * 100).toFixed(2) + "%";
+      this._el.shadeTop.style.height = (Math.max(0, fBot - fTop) * 100).toFixed(2) + "%";
+      this._el.shadeBottom.style.height = "0%";
+    } else {
+      // Two separate shades closing in from the top and the bottom edge.
+      this._el.shadeTop.style.top = "0";
+      this._el.shadeTop.style.height = (fTop * 100).toFixed(2) + "%";
+      this._el.shadeBottom.style.height = ((1 - fBot) * 100).toFixed(2) + "%";
+    }
 
     const paint = (part, frac) => {
       const r = this._rails[part];
@@ -706,7 +741,8 @@ class TdbuBlindCard extends HTMLElement {
       const pos = dragging ? this._snap(this._fracToPos(part, frac)) : res.value;
       const known = pos !== null;
       const remembered = !dragging && res.source === "memory";
-      const shown = c.display === "position" ? pos : Math.round((part === "top" ? frac : 1 - frac) * 100);
+      // Cover positions are percent-open, so "covered" is simply the complement.
+      const shown = c.display === "position" ? pos : 100 - pos;
 
       r.val.textContent = known ? `${shown}%` : "—";
       r.val.classList.toggle("off", !known);
@@ -739,6 +775,9 @@ const editorSchema = (t) => [
       { name: "appearance", selector: { select: { mode: "dropdown", options: [
         { value: "auto", label: t("ed_appearance_auto") },
         { value: "dark", label: t("ed_appearance_dark") }] } } },
+      { name: "layout", selector: { select: { mode: "dropdown", options: [
+        { value: "between", label: t("ed_layout_between") },
+        { value: "split", label: t("ed_layout_split") }] } } },
       { name: "display", selector: { select: { mode: "dropdown", options: [
         { value: "position", label: t("ed_display_position") },
         { value: "coverage", label: t("ed_display_coverage") }] } } },

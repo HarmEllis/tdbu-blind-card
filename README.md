@@ -74,6 +74,7 @@ Everything else is optional.
 | `name` | string | top entity's name, minus a trailing "top" | Card title. Use `""` to hide. |
 | `top_position_entity` | entity | — | `input_number` (or `number`) holding the last known top position. See [Position memory](#position-memory). |
 | `bottom_position_entity` | entity | — | Same, for the bottom rail. |
+| `layout` | `between` \| `split` | `between` | `between`: one sheet of fabric spanning from the top rail down to the bottom rail, so the openings are above and below it — the standard top-down/bottom-up blind. `split`: two independent shades closing in from the top and bottom edge, with the view in the middle. See [Blind layout](#blind-layout). |
 | `appearance` | `auto` \| `dark` | `auto` | `auto` follows the active theme; `dark` always renders the dark treatment. |
 | `display` | `position` \| `coverage` | `position` | `position` shows the Home Assistant cover position, the same as every other cover in HA (100 = open). `coverage` instead shows how much of the window each shade covers, which reads directly off the illustration. |
 | `height` | number | `260` | Height of the window illustration in pixels. |
@@ -142,17 +143,50 @@ be mirrored into the same helpers with one automation — see
 the physical remote, the remembered value will be wrong until the blind is
 commanded again; correct it by editing the helper directly.
 
+## Blind layout
+
+Two different products both get called "top-down/bottom-up", and they need
+opposite drawings. Pick the one that matches your blind with `layout`.
+
+```
+layout: between (default)        layout: split
+┌──────────┐  ← opening          ┌──────────┐
+│          │                     │▒▒▒▒▒▒▒▒▒▒│  top shade
+├══════════┤  ← top rail         ├──────────┤  ← top rail
+│▒▒▒▒▒▒▒▒▒▒│                     │          │
+│▒▒▒▒▒▒▒▒▒▒│  one sheet          │   view   │
+├══════════┤  ← bottom rail      ├──────────┤  ← bottom rail
+│          │                     │▒▒▒▒▒▒▒▒▒▒│  bottom shade
+└──────────┘  ← opening          └──────────┘
+```
+
+**`between`** — one sheet of fabric hangs between the two rails. Closed means
+the top rail is all the way up *and* the bottom rail all the way down. You open
+it from the top by lowering the top rail, and from the bottom by raising the
+bottom rail. This is the classic TDBU pleated/honeycomb blind.
+
+**`split`** — two independent shades, one dropping from the top and one rising
+from the bottom, leaving a gap in the middle.
+
+In both layouts each slider thumb sits where its rail sits in the window, so you
+always drag in the direction the rail travels.
+
 ## How the geometry works
 
 Home Assistant cover positions are "percent open": `100` = open, `0` = closed.
-The card converts that to rail positions:
+The card converts that to a rail position measured from the top of the window:
 
-- top rail distance from the top of the window = `(100 − top position) / 100`
-- bottom rail distance from the top of the window = `bottom position / 100`
+| | `between` | `split` |
+|---|---|---|
+| top rail | `top position / 100` | `(100 − top position) / 100` |
+| bottom rail | `(100 − bottom position) / 100` | `bottom position / 100` |
 
-The fabric is drawn from the top edge down to the top rail, and from the bottom
-rail down to the bottom edge. If your blind runs the other way round, set
-`invert_top` and/or `invert_bottom`.
+Fabric is then drawn between the rails (`between`) or outside them (`split`).
+
+If a rail moves the opposite way from what the illustration shows, your
+integration reports that cover's position the other way round — set `invert_top`
+and/or `invert_bottom` to mirror just that rail. If instead the *fabric* is on
+the wrong side of the rails, you want the other `layout`.
 
 ## Contributing translations
 
