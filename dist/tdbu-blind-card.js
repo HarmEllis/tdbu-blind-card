@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.3.0";
+const CARD_VERSION = "1.4.0";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -40,8 +40,10 @@ const TRANSLATIONS = {
     sub_bottom: "bottom {v}%",
     preset_gap_bottom: "Bottom gap",
     preset_band: "Band",
+    preset_top_strip: "Top strip",
     sub_bottom_half: "bottom half",
     sub_at_bottom: "{v}% at the bottom",
+    sub_at_top: "{v}% at the top",
     sub_band: "middle band",
     ed_name: "Name",
     ed_top_entity: "Top cover",
@@ -90,8 +92,10 @@ const TRANSLATIONS = {
     sub_bottom: "onder {v}%",
     preset_gap_bottom: "Kier onder",
     preset_band: "Midden",
+    preset_top_strip: "Strook boven",
     sub_bottom_half: "onderste helft",
     sub_at_bottom: "{v}% onderaan",
+    sub_at_top: "{v}% bovenaan",
     sub_band: "middenband",
     ed_name: "Naam",
     ed_top_entity: "Cover bovenkant",
@@ -140,8 +144,10 @@ const TRANSLATIONS = {
     sub_bottom: "unten {v}%",
     preset_gap_bottom: "Spalt unten",
     preset_band: "Mitte",
+    preset_top_strip: "Streifen oben",
     sub_bottom_half: "untere H\u00e4lfte",
     sub_at_bottom: "{v}% unten",
+    sub_at_top: "{v}% oben",
     sub_band: "Mittelband",
     ed_name: "Name",
     ed_top_entity: "Cover oben",
@@ -190,8 +196,10 @@ const TRANSLATIONS = {
     sub_bottom: "bas {v}%",
     preset_gap_bottom: "Jour en bas",
     preset_band: "Milieu",
+    preset_top_strip: "Bande en haut",
     sub_bottom_half: "moiti\u00e9 basse",
     sub_at_bottom: "{v}% en bas",
+    sub_at_top: "{v}% en haut",
     sub_band: "bande centrale",
     ed_name: "Nom",
     ed_top_entity: "Volet haut",
@@ -244,9 +252,10 @@ const defaultPresets = (t, between) => (between
       // Fabric spans between the rails: closed is top rail up, bottom rail down,
       // and open parks both rails together at the head.
       { name: t("preset_open"), sub: t("sub_all_open"), top: 0, bottom: 100 },
+      { name: t("preset_top_strip"), sub: t("sub_at_top", { v: 20 }), top: 0, bottom: 80 },
+      { name: t("preset_band"), sub: t("sub_band"), top: 50, bottom: 30 },
       { name: t("preset_privacy"), sub: t("sub_bottom_half"), top: 50, bottom: 0 },
       { name: t("preset_gap_bottom"), sub: t("sub_at_bottom", { v: 20 }), top: 0, bottom: 20 },
-      { name: t("preset_band"), sub: t("sub_band"), top: 50, bottom: 30 },
       { name: t("preset_closed"), sub: t("sub_all_closed"), top: 0, bottom: 0 },
     ]
   : [

@@ -34,3 +34,8 @@
   `split`; under `between` two of the four asked the rails to cross, which the
   collision clamp silently turned into a meaningless position.
 - `between` ships with Open / Privacy / Bottom gap / Band / Closed.
+
+## 1.4.0
+
+- Added a "Top strip" preset to the `between` set, and ordered that set from
+  least to most fabric.

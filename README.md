@@ -122,12 +122,15 @@ defaults differ too.
 **`layout: between`** — the fabric spans between the rails, so `top` is how far
 the top rail has come down and `bottom` is how far the bottom rail has come up:
 
+Listed from least to most fabric:
+
 | Preset | `top` | `bottom` | Result |
 |---|---|---|---|
 | Open | 0 | 100 | both rails parked at the head, whole window clear |
+| Top strip | 0 | 80 | a 20% strip of fabric along the top, rest clear |
+| Band | 50 | 30 | a band of fabric across the middle |
 | Privacy | 50 | 0 | fabric over the bottom half |
 | Bottom gap | 0 | 20 | fabric over all but the lowest 20% |
-| Band | 50 | 30 | a band of fabric across the middle |
 | Closed | 0 | 0 | fabric over the whole window |
 
 **`layout: split`** — two independent shades, each closing in from its own edge:
