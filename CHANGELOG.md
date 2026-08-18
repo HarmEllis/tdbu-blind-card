@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.0
 
 - Scale the complete blind illustration down when a card is narrower than its
   preferred width, preventing it from overflowing while keeping the control
