@@ -1,6 +1,9 @@
 # TDBU Blind Card
 
-[![hacs](https://img.shields.io/badge/HACS-custom-41BDF5.svg)](https://hacs.xyz)
+[![HACS custom](https://img.shields.io/badge/HACS-custom-41BDF5.svg)](https://hacs.xyz)
+[![Release](https://img.shields.io/github/v/release/HarmEllis/tdbu-blind-card?display_name=tag&sort=semver)](https://github.com/HarmEllis/tdbu-blind-card/releases)
+[![Validate](https://github.com/HarmEllis/tdbu-blind-card/actions/workflows/validate.yml/badge.svg)](https://github.com/HarmEllis/tdbu-blind-card/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/HarmEllis/tdbu-blind-card)](LICENSE)
 
 ![TDBU Blind Card preview](assets/tdbu-blind-card-preview.png)
 
@@ -9,8 +12,18 @@ Home Assistant as *two* cover entities, one for the top rail and one for the
 bottom rail (MotionBlinds, Coulisse, Somfy, Zigbee TDBU shades, honeycomb/pleated
 "duo" blinds, …).
 
-The card shows both shades in one window illustration, with a vertical slider per
-rail, a control row and configurable quick actions.
+The card shows both shades in one window illustration, with one bar carrying a
+handle per rail, open / stop / close buttons and configurable quick actions.
+
+## Contents
+
+- [Features](#features)
+- [Installation](#installation) · [Versions and updating](#versions-and-updating)
+- [Usage](#usage) · [Options](#options) · [Presets](#presets)
+- [Position memory](#position-memory)
+- [Blind layout](#blind-layout) · [How the geometry works](#how-the-geometry-works)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing) · [License](#license)
 
 ## Features
 
@@ -41,6 +54,18 @@ rail, a control row and configurable quick actions.
 2. Settings → Dashboards → three-dot menu → **Resources** → add
    `/local/tdbu-blind-card.js` as **JavaScript module**.
 
+### Versions and updating
+
+Releases follow [semantic versioning](https://semver.org): a patch fixes
+behaviour, a minor adds an option, a major changes an existing option's meaning.
+Each release is a `v<version>` tag with `dist/tdbu-blind-card.js` attached, and
+[CHANGELOG.md](CHANGELOG.md) says what changed.
+
+HACS offers a new version once it is released — update there, then hard-refresh
+the browser, because the old module stays cached until you do. To see which
+version a browser actually loaded, open the developer console: the card logs
+`TDBU-BLIND-CARD <version>` when it registers itself.
+
 ## Usage
 
 ```yaml
@@ -50,7 +75,8 @@ top_entity: cover.bedroom_blind_top
 bottom_entity: cover.bedroom_blind_bottom
 ```
 
-Everything else is optional.
+Everything else is optional. A fully configured card is in
+[`examples/card.yaml`](examples/card.yaml).
 
 ### Options
 
@@ -65,7 +91,7 @@ Everything else is optional.
 | `appearance` | `auto` \| `dark` | `auto` | `auto` follows the active theme; `dark` always renders the dark treatment. |
 | `display` | `position` \| `coverage` | `position` | `position` shows the Home Assistant cover position, the same as every other cover in HA (100 = open). `coverage` instead shows how much of the window each shade covers, which reads directly off the illustration. |
 | `height` | number | `260` | Height of the window illustration in pixels. |
-| `step` | number | `1` | Snap step for the sliders, in percent. |
+| `step` | number | `1` | Snap step for the handles, in percent. |
 | `invert_top` | bool | `false` | Flip the top rail's direction if the illustration does not match reality. |
 | `invert_bottom` | bool | `false` | Same, for the bottom rail. |
 | `collision` | `block` \| `push` \| `none` | `block` | What happens when you drag a handle past the other one. `block` stops it against the other handle, `push` drags the other one along (and commands both rails on release), `none` lets them cross. Replaces `prevent_overlap`, which is still honoured when set to `false`. |
@@ -73,7 +99,7 @@ Everything else is optional.
 | `scene` | `gradient` \| `none` \| image path | `gradient` | What is drawn behind the shades. Any `/local/...` image works. |
 | `presets` | list | depends on `layout` | Quick actions, see [Presets](#presets). |
 | `presets_label` | string | "Quick actions" | Heading above the quick actions. |
-| `top_label` / `bottom_label` | string | "Top" / "Bottom" | Override the slider labels. |
+| `top_label` / `bottom_label` | string | "Top" / "Bottom" | Override the rail labels. |
 | `language` | string | HA user language | Force the card's language, e.g. `nl`. |
 | `remember` | bool | `true` | Set to `false` to stop writing to the position-memory entities. |
 
@@ -102,7 +128,10 @@ presets:
 Preset positions describe the blind the way the card draws it. On a card with
 `invert_top` or `invert_bottom` set, the card mirrors them when it sends the
 command, so the same preset means the same thing on every card even when one
-blind reports its position the other way round.
+blind reports its position the other way round. The open and close buttons
+follow the same rule: they describe the blind as the card draws it, so on an
+inverted rail the card sends a mirrored `cover.set_cover_position` rather than
+`open_cover` / `close_cover`, which carry no position to mirror.
 
 Because a position number lands somewhere different in each layout, the built-in
 defaults differ too.
@@ -153,7 +182,7 @@ top_position_entity: input_number.bedroom_blind_top_position
 bottom_position_entity: input_number.bedroom_blind_bottom_position
 ```
 
-The card writes the helper whenever it commands a position (slider, preset,
+The card writes the helper whenever it commands a position (handle, preset,
 open, close) and falls back to it whenever the cover itself reports no position.
 A remembered value is shown with a dotted underline, so you can tell it apart
 from a measured one.
@@ -210,11 +239,31 @@ integration reports that cover's position the other way round — set `invert_to
 and/or `invert_bottom` to mirror just that rail. If instead the *fabric* is on
 the wrong side of the rails, you want the other `layout`.
 
-## Contributing translations
+## Troubleshooting
 
-Copy the `en` block in `TRANSLATIONS` at the top of `dist/tdbu-blind-card.js`,
-translate the values, and open a pull request. Missing keys fall back to English.
+| Symptom | Cause and fix |
+|---|---|
+| "Custom element doesn't exist: tdbu-blind-card" | The resource is missing or not registered as a **JavaScript module**, or the browser is still serving the old bundle. Check Settings → Dashboards → Resources, then hard-refresh (Ctrl/Cmd + Shift + R). |
+| Both positions show "—" | The cover reports no position. Set up [Position memory](#position-memory). |
+| A rail travels the opposite way from the illustration | Your integration reports that cover's position the other way round. Set `invert_top` or `invert_bottom` for that rail only. |
+| The fabric sits on the wrong side of the rails | Wrong `layout` — see [Blind layout](#blind-layout). Inverting a rail will not fix this. |
+| A handle stops against the other one | `collision: block` is the default. Use `push` or `none`. |
+| The remembered position is wrong after using the physical remote | Expected: the blind never reports back, so the card cannot know. Correct the helper, or mirror external commands with [`examples/position-memory.yaml`](examples/position-memory.yaml). |
+| The console reports a version you did not install | The old module is cached. Hard-refresh; if it persists, check for a second, stale resource entry. |
+
+## Contributing
+
+Issues and pull requests are welcome. The card is a single dependency-free file
+with no build step, so `dist/tdbu-blind-card.js` is edited directly; CI runs the
+HACS validation and `node --check` on every push.
+
+A user-visible change needs a `CHANGELOG.md` entry and a matching `CARD_VERSION`
+bump — see [Versions and updating](#versions-and-updating).
+
+**Translations:** copy the `en` block in `TRANSLATIONS` at the top of
+`dist/tdbu-blind-card.js`, translate the values, and open a pull request. Missing
+keys fall back to English.
 
 ## License
 
-MIT
+[MIT](LICENSE)

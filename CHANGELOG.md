@@ -1,30 +1,55 @@
 # Changelog
 
+Semantic versioning. Every entry here matches the `CARD_VERSION` constant at the
+top of `dist/tdbu-blind-card.js` and a `v<version>` tag in git.
+
+## 1.6.1
+
+- Fixed the open and close buttons ignoring `invert_top` / `invert_bottom`. They
+  sent `open_cover` / `close_cover` straight to the cover, which travels the
+  opposite way on an inverted rail, and then stored the unmirrored position in the
+  memory helper — so the illustration showed the reverse of what the blind did.
+  An inverted rail now gets an explicit `set_cover_position` with the mirrored
+  value, matching what presets and handle drags already did.
+- Reworked the README: the intro and a few option descriptions still described
+  the two sliders that 1.2.0 replaced, the mirroring rule now covers the open and
+  close buttons, and there is a troubleshooting table, a contributing section and
+  a versioning section.
+
 ## 1.6.0
 
 - Scale the complete blind illustration down when a card is narrower than its
   preferred width, preventing it from overflowing while keeping the control
   buttons at their full touch-target size.
 - Let preset chips shrink to the available width on exceptionally narrow cards.
+- Note: the `CARD_VERSION` bump was missed here, so this card still reported
+  itself as `1.5.0` in the browser console.
 
-## 1.0.0
+## 1.5.0
 
-- Initial release.
-- Window illustration with independent top and bottom shades.
-- Two vertical sliders that map to the physical rail positions.
-- Open / stop / close / favourite control row and configurable quick actions.
-- Optional position memory for integrations that never report a position
-  (for example `motionblinds_ble`).
-- Visual editor and UI strings in English, Dutch, German and French.
+- Dropped the settings and favourite buttons. Both duplicated something already
+  on the card: more-info is reachable by tapping a rail's label, and the
+  favourite ran a preset that is already a chip. `favorite` is gone with it.
+- The remaining open / stop / close buttons move to a column beside the window
+  when the card is wide enough, and fall back to a row underneath when it is not.
 
-## 1.1.0
+## 1.4.1
 
-- Added `layout`, distinguishing a blind with one sheet of fabric spanning
-  between the rails (`between`, now the default) from two independent shades
-  with the view in the middle (`split`, the previous behaviour).
-- `invert_top` / `invert_bottom` are now a pure mirror of a single rail, on top
-  of whichever layout is selected.
-- Simplified the `coverage` display to the complement of the cover position.
+- Presets now honour `invert_top` / `invert_bottom`. Dragging a handle already
+  mirrored the position on such a card, but a preset sent its number straight
+  through, so it drove the inverted rail to the opposite end.
+
+## 1.4.0
+
+- Added a "Top strip" preset to the `between` set, and ordered that set from
+  least to most fabric.
+
+## 1.3.0
+
+- The built-in presets now depend on `layout`. The previous set was written for
+  `split`; under `between` two of the four asked the rails to cross, which the
+  collision clamp silently turned into a meaningless position.
+- `between` ships with Open / Privacy / Bottom gap / Band / Closed.
 
 ## 1.2.0
 
@@ -35,28 +60,21 @@
 - Added `collision` (`block` / `push` / `none`), replacing `prevent_overlap`.
 - Dragging still sends nothing; each handle commands its rail once on release.
 
-## 1.3.0
+## 1.1.0
 
-- The built-in presets now depend on `layout`. The previous set was written for
-  `split`; under `between` two of the four asked the rails to cross, which the
-  collision clamp silently turned into a meaningless position.
-- `between` ships with Open / Privacy / Bottom gap / Band / Closed.
+- Added `layout`, distinguishing a blind with one sheet of fabric spanning
+  between the rails (`between`, now the default) from two independent shades
+  with the view in the middle (`split`, the previous behaviour).
+- `invert_top` / `invert_bottom` are now a pure mirror of a single rail, on top
+  of whichever layout is selected.
+- Simplified the `coverage` display to the complement of the cover position.
 
-## 1.4.0
+## 1.0.0
 
-- Added a "Top strip" preset to the `between` set, and ordered that set from
-  least to most fabric.
-
-## 1.4.1
-
-- Presets now honour `invert_top` / `invert_bottom`. Dragging a handle already
-  mirrored the position on such a card, but a preset sent its number straight
-  through, so it drove the inverted rail to the opposite end.
-
-## 1.5.0
-
-- Dropped the settings and favourite buttons. Both duplicated something already
-  on the card: more-info is reachable by tapping a rail's label, and the
-  favourite ran a preset that is already a chip. `favorite` is gone with it.
-- The remaining open / stop / close buttons move to a column beside the window
-  when the card is wide enough, and fall back to a row underneath when it is not.
+- Initial release.
+- Window illustration with independent top and bottom shades.
+- Two vertical sliders that map to the physical rail positions.
+- Open / stop / close / favourite control row and configurable quick actions.
+- Optional position memory for integrations that never report a position
+  (for example `motionblinds_ble`).
+- Visual editor and UI strings in English, Dutch, German and French.

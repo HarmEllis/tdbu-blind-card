@@ -8,7 +8,7 @@
  *
  * MIT licensed.
  */
-const CARD_VERSION = "1.5.0";
+const CARD_VERSION = "1.6.1";
 
 /* ------------------------------------------------------------------ *
  * Translations
@@ -793,15 +793,22 @@ class TdbuBlindCard extends HTMLElement {
   _action(act) {
     const target = this._config.buttons_target === "top" ? ["top"]
       : this._config.buttons_target === "bottom" ? ["bottom"] : ["top", "bottom"];
-    const svc = act === "open" ? "open_cover" : act === "close" ? "close_cover" : "stop_cover";
-    target.forEach((p) => this._call(svc, this._entity(p)));
     if (act === "stop") {
+      target.forEach((p) => this._call("stop_cover", this._entity(p)));
       // Stopped mid-travel: the real position is unknown, leave the memory alone.
       this._local = {};
       return;
     }
-    const pos = act === "open" ? 100 : 0;
+    // Open and close describe the blind as the card draws it, so on an inverted
+    // rail they are the opposite of that cover's own open and close. There is no
+    // position in open_cover / close_cover to mirror, so an inverted rail gets an
+    // explicit set_cover_position instead — the same rule presets and drags follow.
+    const shown = act === "open" ? 100 : 0;
     target.forEach((p) => {
+      const inv = p === "top" ? this._config.invert_top : this._config.invert_bottom;
+      const pos = this._toRaw(p, shown);
+      if (inv) this._call("set_cover_position", this._entity(p), { position: pos });
+      else this._call(act === "open" ? "open_cover" : "close_cover", this._entity(p));
       this._local[p] = { value: pos, until: Date.now() + 3000 };
       this._remember(p, pos);
     });
